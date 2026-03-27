@@ -1,0 +1,8 @@
+# Vsázka — sledující Václava Moravce
+# Formát: Jméno,Tip
+Jméno,Tip
+Tomáš,12500
+Markéta,9800
+Ondřej,15200
+Petra,11000
+Jakub,13750
