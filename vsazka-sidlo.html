@@ -295,7 +295,7 @@
             <th>Tipuje</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody id="votes-body">
           <tr>
             <td class="name" style="color:var(--muted);font-size:10px;">01</td>
             <td class="name">Doktor Martin</td>
@@ -315,14 +315,8 @@
         </tbody>
       </table>
 
-      <div class="summary">
-        <span>Celkem tipů: <span>2</span></span>
-        <span>ANO: <span>1</span> &nbsp;/&nbsp; NE: <span>1</span></span>
-      </div>
+      <div class="summary" id="summary"></div>
     </div>
-
-    <div class="summary" id="summary"></div>
-
 
     <script>
     function updateSummary() {
@@ -336,18 +330,16 @@
       });
       const total = ano + ne;
       document.getElementById('summary').innerHTML = `
-        <span>Celkem tipů: <span class="val">${total}</span></span>
-        <span>ANO: <span class="val">${ano}</span> &nbsp;/&nbsp; NE: <span class="val-no">${ne}</span></span>
+        <span>Celkem tipů: <span>${total}</span></span>
+        <span>ANO: <span>${ano}</span> &nbsp;/&nbsp; NE: <span style="color:var(--no)">${ne}</span></span>
       `;
     }
- 
-    // Spustit při načtení stránky
+
     updateSummary();
- 
-    // Sledovat změny v tabulce (pro případ dynamických úprav)
+
     const observer = new MutationObserver(updateSummary);
     observer.observe(document.getElementById('votes-body'), { childList: true, subtree: true });
-  </script>
+    </script>
 
     <footer>pan pes &copy; 2026</footer>
   </div>
