@@ -306,6 +306,11 @@
             <td class="name">Kačenka</td>
             <td class="vote"><span class="badge ne">NE</span></td>
           </tr>
+          <tr>
+            <td class="name" style="color:var(--muted);font-size:10px;">02</td>
+            <td class="name">Tom_Sitch</td>
+            <td class="vote"><span class="badge ne">NE</span></td>
+          </tr>
           <!-- Přidej další řádky sem -->
         </tbody>
       </table>
@@ -315,6 +320,34 @@
         <span>ANO: <span>1</span> &nbsp;/&nbsp; NE: <span>1</span></span>
       </div>
     </div>
+
+    <div class="summary" id="summary"></div>
+
+
+    <script>
+    function updateSummary() {
+      const rows = document.querySelectorAll('#votes-body tr');
+      let ano = 0, ne = 0;
+      rows.forEach(row => {
+        const badge = row.querySelector('.badge');
+        if (!badge) return;
+        if (badge.classList.contains('ano')) ano++;
+        else if (badge.classList.contains('ne')) ne++;
+      });
+      const total = ano + ne;
+      document.getElementById('summary').innerHTML = `
+        <span>Celkem tipů: <span class="val">${total}</span></span>
+        <span>ANO: <span class="val">${ano}</span> &nbsp;/&nbsp; NE: <span class="val-no">${ne}</span></span>
+      `;
+    }
+ 
+    // Spustit při načtení stránky
+    updateSummary();
+ 
+    // Sledovat změny v tabulce (pro případ dynamických úprav)
+    const observer = new MutationObserver(updateSummary);
+    observer.observe(document.getElementById('votes-body'), { childList: true, subtree: true });
+  </script>
 
     <footer>pan pes &copy; 2026</footer>
   </div>
