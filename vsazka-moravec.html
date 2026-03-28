@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sledující Moravce – Herberk vsázky</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    :root {
+      --bg: #0d0d0d;
+      --surface: #141414;
+      --surface2: #1a1a1a;
+      --border: #222;
+      --border-strong: #333;
+      --accent: #c8ff00;
+      --text: #e8e8e8;
+      --muted: #555;
+      --muted2: #888;
+      --red: #ff4444;
+      --gold: #f0b429;
+      --green: #4ade80;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'IBM Plex Mono', monospace;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 40px 20px 80px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(200,255,0,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(200,255,0,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 720px;
+    }
+
+    /* ── BACK LINK ── */
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: var(--muted);
+      font-size: 10px;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      margin-bottom: 48px;
+      transition: color 0.2s;
+      opacity: 0;
+      animation: fadeUp 0.5s ease forwards 0.05s;
+    }
+    .back-link:hover { color: var(--accent); }
+    .back-link .arrow { font-size: 14px; transition: transform 0.2s; }
+    .back-link:hover .arrow { transform: translateX(-4px); }
+    .back-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 15px;
+      letter-spacing: 0.12em;
+    }
+
+    /* ── HEADER ── */
+    header { margin-bottom: 48px; }
+
+    .label {
+      font-size: 10px;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 12px;
+      opacity: 0;
+      animation: fadeUp 0.6s ease forwards 0.15s;
+    }
+
+    h1 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(44px, 9vw, 84px);
+      line-height: 0.95;
+      letter-spacing: 0.02em;
+      color: var(--text);
+      opacity: 0;
+      animation: fadeUp 0.7s ease forwards 0.25s;
+    }
+    h1 span { color: var(--accent); }
+
+    .divider {
+      width: 40px;
+      height: 2px;
+      background: var(--accent);
+      margin-top: 28px;
+      opacity: 0;
+      animation: fadeUp 0.6s ease forwards 0.35s;
+    }
+
+    /* ── SECTION LABEL ── */
+    .section-label {
+      font-size: 10px;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 12px;
+      margin-top: 36px;
+    }
+
+    /* Question */
+    .question-block {
+      margin-bottom: 28px;
+      opacity: 0;
+      animation: fadeUp 0.6s ease forwards 0.45s;
+    }
+
+    .question-label {
+      font-size: 10px;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+
+    .question-text {
+      font-size: 13px;
+      line-height: 1.6;
+      color: var(--text);
+      letter-spacing: 0.03em;
+      border-left: 2px solid var(--accent);
+      padding-left: 16px;
+    }
+
+
+    /* ── IMPORT BAR ── */
+    .import-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      opacity: 0;
+      animation: fadeUp 0.6s ease forwards 0.4s;
+    }
+
+    .btn-import {
+      height: 36px;
+      padding: 0 16px;
+      background: transparent;
+      color: var(--accent);
+      border: 1px solid rgba(200,255,0,0.4);
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: background 0.15s, border-color 0.15s;
+      white-space: nowrap;
+    }
+    .btn-import:hover { background: rgba(200,255,0,0.07); border-color: var(--accent); }
+
+    .import-hint {
+      font-size: 10px;
+      color: var(--muted);
+      letter-spacing: 0.05em;
+    }
+
+    /* ── CARD ── */
+    .card {
+      border: 1px solid var(--border);
+      background: var(--surface);
+      margin-bottom: 4px;
+      opacity: 0;
+      animation: fadeUp 0.6s ease forwards 0.5s;
+    }
+
+    .card-header {
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--border);
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .players-container { padding: 16px 20px; }
+
+    .player-row {
+      display: grid;
+      grid-template-columns: 1fr 160px 32px;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    input[type="text"], input[type="number"] {
+      width: 100%;
+      height: 38px;
+      background: var(--surface2);
+      border: 1px solid var(--border-strong);
+      padding: 0 12px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 12px;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.15s, background 0.15s;
+      letter-spacing: 0.03em;
+    }
+    input[type="text"]::placeholder,
+    input[type="number"]::placeholder { color: var(--muted); }
+    input[type="text"]:focus,
+    input[type="number"]:focus { border-color: var(--accent); background: #1e1e1e; }
+
+    .btn-remove {
+      width: 32px; height: 32px;
+      border: 1px solid var(--border-strong);
+      background: transparent; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; color: var(--muted);
+      transition: all 0.15s; flex-shrink: 0;
+    }
+    .btn-remove:hover { border-color: var(--red); color: var(--red); background: rgba(255,68,68,0.06); }
+
+    .btn-add {
+      width: 100%; height: 38px;
+      border: 1px dashed var(--border-strong);
+      background: transparent; cursor: pointer;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px; color: var(--muted);
+      letter-spacing: 0.08em; text-transform: uppercase;
+      margin-top: 8px; transition: all 0.15s;
+    }
+    .btn-add:hover { border-color: var(--accent); color: var(--accent); background: rgba(200,255,0,0.04); }
+
+    /* ── REAL VALUE INPUT ── */
+    .result-input-card {
+      border: 1px solid var(--border);
+      background: var(--surface);
+      padding: 16px 20px;
+      display: flex; align-items: center; gap: 16px;
+      margin-top: 16px; margin-bottom: 4px;
+      opacity: 0;
+      animation: fadeUp 0.6s ease forwards 0.6s;
+    }
+    .result-input-card label {
+      font-size: 10px; letter-spacing: 0.2em;
+      text-transform: uppercase; color: var(--muted);
+      white-space: nowrap; flex-shrink: 0;
+    }
+
+    /* ── CHART ── */
+    .chart-card {
+      border: 1px solid var(--border);
+      background: var(--surface);
+      padding: 20px; margin-bottom: 4px;
+    }
+    .chart-wrap { position: relative; height: 260px; }
+
+    /* ── RESULTS ── */
+    .winner-card {
+      border: 1px solid rgba(240,180,41,0.3);
+      background: rgba(240,180,41,0.06);
+      padding: 20px 24px;
+      display: flex; align-items: center; gap: 16px;
+      margin-bottom: 4px;
+    }
+    .winner-trophy {
+      width: 44px; height: 44px;
+      background: rgba(240,180,41,0.1);
+      border: 1px solid rgba(240,180,41,0.3);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px; flex-shrink: 0;
+    }
+    .winner-info .name {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 28px; letter-spacing: 0.04em;
+      color: var(--gold); line-height: 1;
+    }
+    .winner-info .detail {
+      font-size: 11px; color: rgba(240,180,41,0.6);
+      margin-top: 4px; letter-spacing: 0.05em;
+    }
+
+    .rank-card {
+      border: 1px solid var(--border); border-top: none;
+      background: var(--surface);
+      padding: 16px 20px;
+      display: flex; align-items: center; gap: 14px;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .rank-card:hover { border-color: var(--border-strong); background: var(--surface2); }
+
+    .rank-num {
+      font-size: 11px; color: var(--muted);
+      width: 24px; flex-shrink: 0;
+      text-align: center; letter-spacing: 0.05em;
+    }
+    .player-details { flex: 1; min-width: 0; }
+    .player-details .pname { font-size: 13px; color: var(--text); letter-spacing: 0.03em; }
+    .player-details .pstats { font-size: 10px; color: var(--muted); margin-top: 3px; letter-spacing: 0.05em; }
+
+    .los-grid { display: flex; gap: 4px; flex-shrink: 0; }
+    .los-pill {
+      display: flex; flex-direction: column; align-items: center;
+      padding: 6px 10px; border: 1px solid var(--border); min-width: 50px;
+    }
+    .los-pill .num { font-size: 16px; font-weight: 500; line-height: 1; }
+    .los-pill .lbl { font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; margin-top: 3px; color: var(--muted); }
+
+    .pill-buys { border-color: rgba(255,68,68,0.3); }
+    .pill-buys .num { color: var(--red); }
+    .pill-gets { border-color: rgba(74,222,128,0.3); }
+    .pill-gets .num { color: var(--green); }
+    .pill-net-pos { border-color: rgba(74,222,128,0.3); }
+    .pill-net-pos .num { color: var(--green); }
+    .pill-net-neg { border-color: rgba(255,68,68,0.3); }
+    .pill-net-neg .num { color: var(--red); }
+    .pill-net-zero .num { color: var(--muted2); }
+
+    .owes-row {
+      padding: 6px 20px 6px 58px; font-size: 10px; color: var(--muted);
+      display: flex; flex-wrap: wrap; align-items: center; gap: 4px;
+      border: 1px solid var(--border); border-top: none;
+      background: var(--bg); letter-spacing: 0.03em;
+    }
+    .owes-to-label { margin-right: 4px; }
+    .owes-chip {
+      background: rgba(255,68,68,0.08); border: 1px solid rgba(255,68,68,0.2);
+      color: var(--red); padding: 2px 8px; font-size: 10px;
+    }
+
+    .section-divider { border: none; border-top: 1px solid var(--border); margin: 28px 0 20px; }
+
+    /* ── DATA TABLE ── */
+    .table-card { border: 1px solid var(--border); background: var(--surface); overflow: auto; margin-bottom: 4px; }
+    .data-table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 520px; }
+    .data-table th {
+      padding: 10px 16px; text-align: left;
+      font-size: 9px; font-weight: 400; letter-spacing: 0.15em;
+      text-transform: uppercase; color: var(--muted);
+      background: var(--surface2); border-bottom: 1px solid var(--border);
+    }
+    .data-table th.right, .data-table td.right { text-align: right; }
+    .data-table td { padding: 10px 16px; border-bottom: 1px solid var(--border); color: var(--text); letter-spacing: 0.03em; }
+    .data-table tr:last-child td { border-bottom: none; }
+    .data-table tr.winner-row td { background: rgba(240,180,41,0.05); }
+    .data-table tr:hover td { background: var(--surface2); }
+    .td-mono { font-size: 11px; color: var(--muted2); }
+    .td-rank { font-size: 10px; color: var(--muted); width: 36px; }
+
+    .badge { display: inline-block; padding: 2px 10px; font-size: 10px; letter-spacing: 0.08em; border: 1px solid currentColor; }
+    .badge-green { color: var(--green); border-color: rgba(74,222,128,0.3); background: rgba(74,222,128,0.06); }
+    .badge-red { color: var(--red); border-color: rgba(255,68,68,0.3); background: rgba(255,68,68,0.06); }
+    .badge-gray { color: var(--muted2); border-color: var(--border-strong); }
+
+    .empty-state {
+      text-align: center; padding: 40px 20px;
+      color: var(--muted); font-size: 12px;
+      letter-spacing: 0.05em; border: 1px solid var(--border);
+    }
+
+    /* ── DROP OVERLAY ── */
+    .drop-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 100; align-items: center; justify-content: center; }
+    .drop-overlay.active { display: flex; }
+    .drop-box { border: 1px solid var(--accent); background: var(--surface); padding: 48px 64px; text-align: center; }
+    .drop-box .drop-icon { font-size: 2rem; margin-bottom: 12px; }
+    .drop-box .drop-title { font-size: 14px; letter-spacing: 0.05em; color: var(--text); margin-bottom: 6px; }
+    .drop-box .drop-sub { font-size: 10px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; }
+
+    /* ── TOAST ── */
+    .toast {
+      position: fixed; bottom: 2rem; left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: var(--surface2); border: 1px solid var(--border-strong);
+      color: var(--text); padding: 10px 20px;
+      font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
+      opacity: 0; transition: opacity 0.2s, transform 0.2s;
+      pointer-events: none; white-space: nowrap; z-index: 200;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .toast.error { border-color: var(--red); color: var(--red); }
+
+    footer { margin-top: 60px; font-size: 10px; letter-spacing: 0.15em; color: var(--muted); text-transform: uppercase; opacity: 0; animation: fadeUp 0.6s ease forwards 0.8s; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 480px) {
+      .player-row { grid-template-columns: 1fr 120px 32px; }
+      .los-pill { min-width: 40px; padding: 5px 7px; }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Back link -->
+  <a class="back-link" href="index.html">
+    <span class="arrow">←</span>
+    <span class="back-title">gentlemanské&nbsp;<span style="color:var(--accent)">sázky</span></span>
+  </a>
+
+  <!-- Header -->
+  <header>
+    <p class="label">Vsázka</p>
+    <h1>Sledující<br><span>Moravce</span></h1>
+    <div class="divider"></div>
+  </header>
+
+  <!-- Question -->
+  <div class="question-block">
+      <p class="question-label">Definice</p>
+      <p class="question-text">Jaký bude počet platících sledujících u projektu Václava Moravce na konci prvního měsíce fungování?</p>
+  </div>
+
+
+  <!-- Import -->
+  <div class="import-bar">
+    <button class="btn-import" onclick="document.getElementById('file-input').click()">
+      <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M7 1v8M4 6l3 3 3-3M1 10v1.5A1.5 1.5 0 002.5 13h9A1.5 1.5 0 0013 11.5V10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Načíst ze souboru
+    </button>
+    <span class="import-hint">.xlsx · .xls · .csv — sloupce: Jméno, Tip</span>
+    <input type="file" id="file-input" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleFileInput(event)" />
+  </div>
+
+  <!-- Players card -->
+  <div class="card">
+    <div class="card-header">Hráči a jejich tipy</div>
+    <div class="players-container">
+      <div id="players-list"></div>
+      <button class="btn-add" onclick="addPlayer()">+ přidat hráče</button>
+    </div>
+  </div>
+
+  <!-- Chart -->
+  <div id="chart-section" style="display:none; margin-top:16px;">
+    <div class="section-label">Graf tipů</div>
+    <div class="chart-card">
+      <div class="chart-wrap"><canvas id="tips-chart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Real value -->
+  <div class="result-input-card">
+    <label for="real-value">Skutečný výsledek:</label>
+    <input type="number" id="real-value" placeholder="zadej počet sledujících" oninput="recalculate()" />
+  </div>
+
+  <!-- Results -->
+  <div id="results"></div>
+
+  <footer>pan pes &copy; 2026</footer>
+</div>
+
+<!-- Drop overlay -->
+<div class="drop-overlay" id="drop-overlay">
+  <div class="drop-box">
+    <div class="drop-icon">📂</div>
+    <div class="drop-title">Přetáhni soubor sem</div>
+    <div class="drop-sub">.xlsx · .xls · .csv</div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let players = [
+  { name: "Doktor Martin", tip: "3800" },
+  { name: "brumlastark", tip: "5426" },
+  { name: "Kačenka", tip: "5555" },
+  { name: "Horská Holka (ale jinak Vojtěch)", tip: "1000" },
+  { name: "Tomš", tip: "9300" },
+  { name: "Tom_Sitch", tip: "2600" },
+];
+
+let chartInstance = null;
+const COLORS = ["#c8ff00","#f0b429","#4ade80","#60a5fa","#c084fc","#f472b6","#34d399","#fb923c"];
+
+function renderPlayers() {
+  const list = document.getElementById("players-list");
+  list.innerHTML = players.map((p, i) => `
+    <div class="player-row">
+      <input type="text" placeholder="Jméno hráče" value="${p.name}"
+        oninput="players[${i}].name=this.value; recalculate()" />
+      <input type="number" placeholder="Tip (číslo)" value="${p.tip}"
+        oninput="players[${i}].tip=this.value; recalculate()" />
+      <button class="btn-remove" onclick="removePlayer(${i})" title="Odebrat">×</button>
+    </div>
+  `).join("");
+  recalculate();
+}
+
+function addPlayer() { players.push({ name: "", tip: "" }); renderPlayers(); }
+function removePlayer(i) { players.splice(i, 1); renderPlayers(); }
+function fmt(n) { return Math.round(n).toLocaleString("cs-CZ"); }
+function recalculate() { updateChart(); updateResults(); }
+
+function getValid() {
+  return players
+    .filter(p => p.name && p.tip !== "" && !isNaN(parseFloat(p.tip)))
+    .map(p => ({ name: p.name, tip: parseFloat(p.tip) }));
+}
+
+function updateChart() {
+  const valid = getValid();
+  const realVal = parseFloat(document.getElementById("real-value").value);
+  const hasReal = !isNaN(realVal);
+
+  if (valid.length < 1) {
+    if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
+    document.getElementById("chart-section").style.display = "none";
+    return;
+  }
+
+  document.getElementById("chart-section").style.display = "block";
+  const byTip = [...valid].sort((a, b) => a.tip - b.tip);
+
+  let winnerName = null;
+  if (hasReal) {
+    const withDiff = valid.map(p => ({ ...p, diff: Math.abs(p.tip - realVal) }));
+    withDiff.sort((a, b) => a.diff - b.diff);
+    winnerName = withDiff[0].name;
+  }
+
+  const datasets = [{
+    label: "Tip hráče",
+    data: byTip.map(p => p.tip),
+    backgroundColor: byTip.map((p, i) =>
+      (winnerName && p.name === winnerName ? "#f0b429" : COLORS[i % COLORS.length]) + "CC"
+    ),
+    borderColor: byTip.map(p => winnerName && p.name === winnerName ? "#f0b429" : "transparent"),
+    borderWidth: 2,
+    borderRadius: 0,
+    borderSkipped: false,
+  }];
+
+  if (hasReal) {
+    datasets.push({
+      label: "Skutečný výsledek",
+      data: Array(byTip.length).fill(realVal),
+      type: "line",
+      borderColor: "#c8ff00",
+      borderWidth: 1.5,
+      borderDash: [5, 4],
+      pointRadius: 0,
+      fill: false,
+      tension: 0,
+      order: 0,
+    });
+  }
+
+  const labels = byTip.map(p => p.name);
+
+  if (chartInstance) {
+    chartInstance.data.labels = labels;
+    chartInstance.data.datasets = datasets;
+    chartInstance.update();
+  } else {
+    chartInstance = new Chart(document.getElementById("tips-chart").getContext("2d"), {
+      type: "bar",
+      data: { labels, datasets },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: { duration: 300 },
+        plugins: {
+          legend: {
+            position: "bottom",
+            labels: {
+              font: { family: "'IBM Plex Mono', monospace", size: 11 },
+              color: "#555", boxWidth: 10, boxHeight: 10, padding: 16,
+            }
+          },
+          tooltip: {
+            callbacks: {
+              label: (ctx) => {
+                if (ctx.dataset.type === "line") return ` Skutečnost: ${fmt(ctx.raw)}`;
+                const p = byTip[ctx.dataIndex];
+                if (hasReal) {
+                  const diff = Math.abs(p.tip - realVal);
+                  return ` ${p.name}: ${fmt(ctx.raw)} (odch. ${fmt(diff)})`;
+                }
+                return ` ${p.name}: ${fmt(ctx.raw)}`;
+              }
+            },
+            titleFont: { family: "'IBM Plex Mono', monospace", weight: "500" },
+            bodyFont: { family: "'IBM Plex Mono', monospace", size: 11 },
+            backgroundColor: "#141414", borderColor: "#333", borderWidth: 1,
+            padding: 12, cornerRadius: 0,
+          }
+        },
+        scales: {
+          x: {
+            grid: { display: false },
+            ticks: { font: { family: "'IBM Plex Mono', monospace", size: 11 }, color: "#888" },
+            border: { color: "#222" }
+          },
+          y: {
+            grid: { color: "rgba(255,255,255,0.04)" },
+            ticks: {
+              font: { family: "'IBM Plex Mono', monospace", size: 10 },
+              color: "#555",
+              callback: v => v.toLocaleString("cs-CZ"),
+            },
+            border: { color: "#222" }
+          }
+        }
+      }
+    });
+  }
+}
+
+function updateResults() {
+  const realVal = parseFloat(document.getElementById("real-value").value);
+  const section = document.getElementById("results");
+  const valid = getValid();
+
+  if (valid.length < 2 || isNaN(realVal)) {
+    section.innerHTML = valid.length >= 2
+      ? `<div class="empty-state">Zadej skutečný výsledek pro vyhodnocení.</div>`
+      : `<div class="empty-state">Vyplň tipy alespoň dvou hráčů a skutečný výsledek.</div>`;
+    return;
+  }
+
+  const ranked = valid.map(p => ({ ...p, diff: Math.abs(p.tip - realVal) }))
+    .sort((a, b) => a.diff - b.diff);
+  const n = ranked.length;
+
+  let html = `
+    <div class="section-label" style="margin-top:28px;">Výsledky</div>
+    <div class="winner-card">
+      <div class="winner-trophy">🏆</div>
+      <div class="winner-info">
+        <div class="name">${ranked[0].name} vyhrál!</div>
+        <div class="detail">tip: ${fmt(ranked[0].tip)} · odchylka: ${fmt(ranked[0].diff)}</div>
+      </div>
+    </div>
+    <div class="section-label" style="margin-top:4px;">Pořadí a losování</div>
+  `;
+
+  ranked.forEach((p, i) => {
+    const buys = i, receives = n - 1 - i, net = receives - buys;
+    const netClass = net > 0 ? "pill-net-pos" : net < 0 ? "pill-net-neg" : "pill-net-zero";
+    const netLabel = net > 0 ? `+${net}` : `${net}`;
+    const owesHtml = i > 0
+      ? `<div class="owes-row"><span class="owes-to-label">Kupuje los:</span>${ranked.slice(0, i).map(r => `<span class="owes-chip">${r.name}</span>`).join("")}</div>`
+      : "";
+
+    html += `
+      <div>
+        <div class="rank-card" style="${i === 0 ? 'border-top: 1px solid var(--border);' : ''}">
+          <div class="rank-num">${i + 1}.</div>
+          <div class="player-details">
+            <div class="pname">${p.name}</div>
+            <div class="pstats">tip: ${fmt(p.tip)} · odch: ${fmt(p.diff)}</div>
+          </div>
+          <div class="los-grid">
+            <div class="los-pill pill-buys"><span class="num">${buys}</span><span class="lbl">kupuje</span></div>
+            <div class="los-pill pill-gets"><span class="num">${receives}</span><span class="lbl">dostane</span></div>
+            <div class="los-pill ${netClass}"><span class="num">${netLabel}</span><span class="lbl">bilance</span></div>
+          </div>
+        </div>
+        ${owesHtml}
+      </div>
+    `;
+  });
+
+  html += `
+    <hr class="section-divider">
+    <div class="section-label">Tabulka výsledků</div>
+    <div class="table-card">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th class="td-rank right">#</th>
+            <th>Hráč</th>
+            <th class="right">Tip</th>
+            <th class="right">Skutečnost</th>
+            <th class="right">Odchylka</th>
+            <th class="right">Kupuje</th>
+            <th class="right">Dostane</th>
+            <th class="right">Bilance</th>
+          </tr>
+        </thead>
+        <tbody>
+  `;
+
+  ranked.forEach((p, i) => {
+    const buys = i, receives = n - 1 - i, net = receives - buys;
+    const netLabel = net > 0 ? `+${net}` : `${net}`;
+    const netBadge = net > 0 ? "badge-green" : net < 0 ? "badge-red" : "badge-gray";
+    html += `
+      <tr class="${i === 0 ? "winner-row" : ""}">
+        <td class="td-rank right">${i + 1}.</td>
+        <td>${p.name}</td>
+        <td class="td-mono right">${fmt(p.tip)}</td>
+        <td class="td-mono right">${fmt(realVal)}</td>
+        <td class="td-mono right">${fmt(p.diff)}</td>
+        <td class="right td-mono">${buys}</td>
+        <td class="right td-mono">${receives}</td>
+        <td class="right"><span class="badge ${netBadge}">${netLabel}</span></td>
+      </tr>
+    `;
+  });
+
+  html += `</tbody></table></div>`;
+  section.innerHTML = html;
+}
+
+// ── FILE IMPORT ──
+function showToast(msg, isError) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.className = "toast show" + (isError ? " error" : "");
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => { t.className = "toast"; }, 3000);
+}
+
+function handleFileInput(e) {
+  const file = e.target.files[0];
+  if (file) parseFile(file);
+  e.target.value = "";
+}
+
+function parseFile(file) {
+  const name = file.name.toLowerCase();
+  const reader = new FileReader();
+  if (name.endsWith(".csv")) {
+    reader.onload = (e) => parseCSV(e.target.result);
+    reader.readAsText(file, "UTF-8");
+  } else {
+    reader.onload = (e) => parseXLSX(e.target.result);
+    reader.readAsArrayBuffer(file);
+  }
+}
+
+function parseXLSX(buffer) {
+  try {
+    const wb = XLSX.read(buffer, { type: "array" });
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: "" });
+    importRows(rows);
+  } catch (err) {
+    showToast("Chyba při čtení souboru.", true);
+  }
+}
+
+function parseCSV(text) {
+  try {
+    const rows = text.trim().split(/\r?\n/).map(line =>
+      line.split(/[,;\t]/).map(c => c.trim().replace(/^["']|["']$/g, ""))
+    );
+    importRows(rows);
+  } catch (err) {
+    showToast("Chyba při čtení CSV.", true);
+  }
+}
+
+function importRows(rows) {
+  if (rows.length < 2) { showToast("Soubor je prázdný.", true); return; }
+  const header = rows[0].map(h => String(h).toLowerCase().trim());
+  let nameCol = -1, tipCol = -1;
+  const nameKw = ["jméno","jmeno","name","hráč","hrac","player"];
+  const tipKw  = ["tip","tipy","odhad","guess","hodnota","count","počet"];
+  header.forEach((h, i) => {
+    if (nameCol === -1 && nameKw.some(k => h.includes(k))) nameCol = i;
+    if (tipCol  === -1 && tipKw.some(k  => h.includes(k))) tipCol  = i;
+  });
+  if (nameCol === -1) nameCol = 0;
+  if (tipCol  === -1) tipCol  = 1;
+  const imported = rows.slice(1)
+    .map(row => ({ name: String(row[nameCol] ?? "").trim(), tip: String(row[tipCol] ?? "").trim() }))
+    .filter(p => p.name && p.tip !== "" && !isNaN(parseFloat(p.tip)));
+  if (imported.length === 0) { showToast("Žádná platná data.", true); return; }
+  players = imported.map(p => ({ name: p.name, tip: p.tip }));
+  renderPlayers();
+  showToast("Načteno " + imported.length + " hráčů ✓");
+}
+
+// ── DRAG & DROP ──
+document.addEventListener("dragover", (e) => { e.preventDefault(); document.getElementById("drop-overlay").classList.add("active"); });
+document.addEventListener("dragleave", (e) => { if (!e.relatedTarget) document.getElementById("drop-overlay").classList.remove("active"); });
+document.addEventListener("drop", (e) => {
+  e.preventDefault();
+  document.getElementById("drop-overlay").classList.remove("active");
+  const file = e.dataTransfer.files[0];
+  if (file) parseFile(file);
+});
+
+renderPlayers();
+</script>
+</body>
+</html>

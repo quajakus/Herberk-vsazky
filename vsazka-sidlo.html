@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jindra Senátor – Herberk vsázky</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@300;400&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0d0d0d;
+      --surface: #141414;
+      --border: #222;
+      --accent: #c8ff00;
+      --text: #e8e8e8;
+      --muted: #555;
+      --yes: #c8ff00;
+      --no: #ff4444;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'IBM Plex Mono', monospace;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(200,255,0,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(200,255,0,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 680px;
+    }
+
+    /* Back link */
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: var(--muted);
+      font-size: 10px;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      margin-bottom: 48px;
+      transition: color 0.2s;
+      opacity: 0;
+      animation: fadeUp 0.5s ease forwards 0.05s;
+    }
+
+    .back-link:hover {
+      color: var(--accent);
+    }
+
+    .back-link .arrow {
+      font-size: 14px;
+      transition: transform 0.2s;
+    }
+
+    .back-link:hover .arrow {
+      transform: translateX(-4px);
+    }
+
+    .back-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 15px;
+      letter-spacing: 0.12em;
+    }
+
+    /* Header */
+    header {
+      margin-bottom: 52px;
+    }
+
+    .label {
+      font-size: 10px;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 12px;
+      opacity: 0;
+      animation: fadeUp 0.6s ease forwards 0.15s;
+    }
+
+    h1 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(44px, 9vw, 84px);
+      line-height: 0.95;
+      letter-spacing: 0.02em;
+      color: var(--text);
+      opacity: 0;
+      animation: fadeUp 0.7s ease forwards 0.25s;
+    }
+
+    h1 span {
+      color: var(--accent);
+    }
+
+    .divider {
+      width: 40px;
+      height: 2px;
+      background: var(--accent);
+      margin-top: 28px;
+      opacity: 0;
+      animation: fadeUp 0.6s ease forwards 0.35s;
+    }
+
+    /* Question */
+    .question-block {
+      margin-bottom: 28px;
+      opacity: 0;
+      animation: fadeUp 0.6s ease forwards 0.45s;
+    }
+
+    .question-label {
+      font-size: 10px;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+
+    .question-text {
+      font-size: 13px;
+      line-height: 1.6;
+      color: var(--text);
+      letter-spacing: 0.03em;
+      border-left: 2px solid var(--accent);
+      padding-left: 16px;
+    }
+
+    /* Table */
+    .table-wrap {
+      opacity: 0;
+      animation: fadeUp 0.7s ease forwards 0.55s;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    thead tr {
+      border-bottom: 1px solid var(--accent);
+    }
+
+    thead th {
+      font-size: 10px;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--muted);
+      padding: 0 24px 14px;
+      text-align: left;
+      font-weight: 400;
+    }
+
+    thead th:last-child {
+      text-align: center;
+    }
+
+    tbody tr {
+      border-bottom: 1px solid var(--border);
+      transition: background 0.2s;
+    }
+
+    tbody tr:hover {
+      background: rgba(200,255,0,0.04);
+    }
+
+    tbody td {
+      padding: 18px 24px;
+      font-size: 13px;
+      letter-spacing: 0.05em;
+    }
+
+    td.name {
+      color: var(--text);
+    }
+
+    td.vote {
+      text-align: center;
+    }
+
+    .badge {
+      display: inline-block;
+      font-size: 11px;
+      letter-spacing: 0.15em;
+      font-weight: 400;
+      padding: 4px 14px;
+      border: 1px solid currentColor;
+    }
+
+    .badge.ano {
+      color: var(--yes);
+      border-color: rgba(200,255,0,0.4);
+      background: rgba(200,255,0,0.06);
+    }
+
+    .badge.ne {
+      color: var(--no);
+      border-color: rgba(255,68,68,0.4);
+      background: rgba(255,68,68,0.06);
+    }
+
+    /* Summary row */
+    .summary {
+      margin-top: 2px;
+      border: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      padding: 14px 24px;
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+      opacity: 0;
+      animation: fadeUp 0.6s ease forwards 0.7s;
+    }
+
+    .summary span {
+      color: var(--accent);
+    }
+
+    footer {
+      margin-top: 60px;
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      color: var(--muted);
+      text-transform: uppercase;
+      opacity: 0;
+      animation: fadeUp 0.6s ease forwards 0.8s;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <!-- Back link -->
+    <a class="back-link" href="index.html">
+      <span class="arrow">←</span>
+      <span class="back-title">gentlemanské&nbsp;<span style="color:var(--accent)">sázky</span></span>
+    </a>
+
+    <!-- Header -->
+    <header>
+      <p class="label">Vsázka</p>
+      <h1>Jindra<br><span>Senátor</span></h1>
+      <div class="divider"></div>
+    </header>
+
+    <!-- Question -->
+    <div class="question-block">
+      <p class="question-label">Definice</p>
+      <p class="question-text">Stane se Jindřich Šídlo v příštích senátních volbách<br>na Praze 7 senátorem?</p>
+    </div>
+
+    <!-- Table -->
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Jméno</th>
+            <th>Tipuje</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="name" style="color:var(--muted);font-size:10px;">01</td>
+            <td class="name">Jméno hráče</td>
+            <td class="vote"><span class="badge ano">ANO</span></td>
+          </tr>
+          <tr>
+            <td class="name" style="color:var(--muted);font-size:10px;">02</td>
+            <td class="name">Jméno hráče</td>
+            <td class="vote"><span class="badge ne">NE</span></td>
+          </tr>
+          <!-- Přidej další řádky sem -->
+        </tbody>
+      </table>
+
+      <div class="summary">
+        <span>Celkem tipů: <span>2</span></span>
+        <span>ANO: <span>1</span> &nbsp;/&nbsp; NE: <span>1</span></span>
+      </div>
+    </div>
+
+    <footer>pan pes &copy; 2026</footer>
+  </div>
+</body>
+</html>
