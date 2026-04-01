@@ -153,6 +153,26 @@
       align-items: center;
     }
 
+    .vsazky-list a .right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .status {
+      font-size: 9px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 3px 10px;
+      border: 1px solid currentColor;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .status-open     { color: #c8ff00; border-color: rgba(200,255,0,0.35); background: rgba(200,255,0,0.05); }
+    .status-waiting  { color: #60a5fa; border-color: rgba(96,165,250,0.35); background: rgba(96,165,250,0.05); }
+    .status-resolved { color: #f0b429; border-color: rgba(240,180,41,0.35); background: rgba(240,180,41,0.05); }
+    .status-closed   { color: var(--muted); border-color: var(--border); }
+
     footer {
       margin-top: 60px;
       opacity: 0;
@@ -210,22 +230,26 @@
     </header>
 
     <ul class="vsazky-list">
-      <li>
+      <li data-status="open" data-file="vsazka-moravec.html">
         <a href="vsazka-moravec.html">
           <span class="left">
             <span class="index-num">01</span>
             <span class="filename">Moravec počet sleďů</span>
           </span>
-          <span class="arrow">→</span>
+          <span class="right">
+            <span class="arrow">→</span>
+          </span>
         </a>
       </li>
-            <li>
+      <li data-status="open" data-file="vsazka-sidlo.html">
         <a href="vsazka-sidlo.html">
           <span class="left">
             <span class="index-num">02</span>
             <span class="filename">Senátor Jindra</span>
           </span>
-          <span class="arrow">→</span>
+          <span class="right">
+            <span class="arrow">→</span>
+          </span>
         </a>
       </li>
       <!-- Další vsázky přidej sem ve stejném formátu -->
@@ -255,5 +279,26 @@
       <div class="footer-copy">Pan pes &copy; 2026</div>
     </footer>
   </div>
+
+  <script>
+  const STATUS_CONFIG = {
+    open:     { label: 'Sběr tipů',            cls: 'status-open' },
+    waiting:  { label: 'Čeká na vyhodnocení',  cls: 'status-waiting' },
+    resolved: { label: 'Rozhodnuto',            cls: 'status-resolved' },
+    closed:   { label: 'Uzavřeno',              cls: 'status-closed' },
+  };
+
+  document.querySelectorAll('.vsazky-list li[data-status]').forEach(li => {
+    const status = li.dataset.status;
+    const cfg    = STATUS_CONFIG[status];
+    if (!cfg) return;
+    const right = li.querySelector('.right');
+    if (!right) return;
+    const badge = document.createElement('span');
+    badge.className = `status ${cfg.cls}`;
+    badge.textContent = cfg.label;
+    right.insertBefore(badge, right.firstChild);
+  });
+  </script>
 </body>
 </html>
