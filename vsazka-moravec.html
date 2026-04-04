@@ -442,6 +442,45 @@
       .player-row { grid-template-columns: 1fr 120px 32px; }
       .los-pill { min-width: 40px; padding: 5px 7px; }
     }
+
+    /* ── STATUS BANNER ── */
+    .status-banner {
+      margin-bottom: 32px;
+      border: 1px solid;
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      opacity: 0;
+      animation: fadeUp 0.6s ease forwards 0.42s;
+    }
+    .status-banner.status-open     { border-color: rgba(200,255,0,0.25); background: rgba(200,255,0,0.04); }
+    .status-banner.status-waiting  { border-color: rgba(96,165,250,0.25); background: rgba(96,165,250,0.04); }
+    .status-banner.status-resolved { border-color: rgba(240,180,41,0.25); background: rgba(240,180,41,0.04); }
+    .status-banner.status-closed   { border-color: #222; background: transparent; }
+
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .status-open     .status-dot { background: #c8ff00; animation: pulse-green 2s infinite; }
+    .status-waiting  .status-dot { background: #60a5fa; animation: pulse-blue 2s infinite; }
+    .status-resolved .status-dot { background: #f0b429; }
+    .status-closed   .status-dot { background: #555; }
+
+    @keyframes pulse-green {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(200,255,0,0.5); }
+      50%       { box-shadow: 0 0 0 5px rgba(200,255,0,0); }
+    }
+    @keyframes pulse-blue {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(96,165,250,0.5); }
+      50%       { box-shadow: 0 0 0 5px rgba(96,165,250,0); }
+    }
+
+    .status-banner-text { flex: 1; }
+    .status-banner-label { font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 3px; }
+    .status-open     .status-banner-label { color: #c8ff00; }
+    .status-waiting  .status-banner-label { color: #60a5fa; }
+    .status-resolved .status-banner-label { color: #f0b429; }
+    .status-closed   .status-banner-label { color: #555; }
+    .status-banner-desc { font-size: 11px; letter-spacing: 0.04em; color: var(--muted2); }
   </style>
 </head>
 <body>
@@ -459,6 +498,9 @@
     <h1>Sledující<br><span>Moravce</span></h1>
     <div class="divider"></div>
   </header>
+
+  <!-- Status banner – vyplní JS -->
+  <div id="status-banner"></div>
 
   <!-- Question -->
   <div class="question-block">
@@ -870,5 +912,34 @@ document.addEventListener("drop", (e) => {
 
 renderPlayers();
 </script>
+  <script>
+  const THIS_FILE = 'vsazka-moravec.html';
+  const STATUS_CONFIG = {
+    open:     { label: 'Otevřeno',            desc: 'Sázka přijímá tipy — zapiš svůj tip!' },
+    waiting:  { label: 'Čeká na vyhodnocení', desc: 'Tipy jsou uzavřeny. Výsledek se brzy ukáže.' },
+    resolved: { label: 'Rozhodnuto',           desc: 'Sázka je vyhodnocena. Vítěz znám.' },
+    closed:   { label: 'Uzavřeno',             desc: 'Tato sázka je archivována.' },
+  };
+  fetch('index.html')
+    .then(r => r.text())
+    .then(html => {
+      const doc    = new DOMParser().parseFromString(html, 'text/html');
+      const li     = doc.querySelector(`li[data-file="${THIS_FILE}"]`);
+      if (!li) return;
+      const status = li.dataset.status || 'closed';
+      const cfg    = STATUS_CONFIG[status] || STATUS_CONFIG.closed;
+      const el     = document.getElementById('status-banner');
+      if (!el) return;
+      el.innerHTML = `
+        <div class="status-banner status-${status}">
+          <div class="status-dot"></div>
+          <div class="status-banner-text">
+            <div class="status-banner-label">${cfg.label}</div>
+            <div class="status-banner-desc">${cfg.desc}</div>
+          </div>
+        </div>`;
+    })
+    .catch(() => {});
+  </script>
 </body>
 </html>
