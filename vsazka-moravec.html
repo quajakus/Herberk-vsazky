@@ -615,7 +615,8 @@
 <div class="toast" id="toast"></div>
 
 <script>
-let players = [
+const PLAYERS_KEY = 'herberk_moravec_players';
+const DEFAULT_PLAYERS = [
   { name: "Doktor Martin", tip: "3800" },
   { name: "brumlastark", tip: "5426" },
   { name: "Kačenka", tip: "5555" },
@@ -623,6 +624,13 @@ let players = [
   { name: "Tomš", tip: "9300" },
   { name: "Tom_Sitch", tip: "2600" },
 ];
+let players;
+try { players = JSON.parse(localStorage.getItem(PLAYERS_KEY)) || DEFAULT_PLAYERS; }
+catch(_) { players = DEFAULT_PLAYERS; }
+
+function savePlayers() {
+  try { localStorage.setItem(PLAYERS_KEY, JSON.stringify(players)); } catch(_) {}
+}
 
 let chartInstance = null;
 const COLORS = ["#c8ff00","#f0b429","#4ade80","#60a5fa","#c084fc","#f472b6","#34d399","#fb923c"];
@@ -644,7 +652,7 @@ function renderPlayers() {
 function addPlayer() { players.push({ name: "", tip: "" }); renderPlayers(); }
 function removePlayer(i) { players.splice(i, 1); renderPlayers(); }
 function fmt(n) { return Math.round(n).toLocaleString("cs-CZ"); }
-function recalculate() { updateChart(); updateResults(); }
+function recalculate() { updateChart(); updateResults(); savePlayers(); }
 
 function getValid() {
   return players
@@ -924,6 +932,7 @@ function importRows(rows) {
     .filter(p => p.name && p.tip !== "" && !isNaN(parseFloat(p.tip)));
   if (imported.length === 0) { showToast("Žádná platná data.", true); return; }
   players = imported.map(p => ({ name: p.name, tip: p.tip }));
+  savePlayers();
   renderPlayers();
   showToast("Načteno " + imported.length + " hráčů ✓");
 }
@@ -940,75 +949,6 @@ document.addEventListener("drop", (e) => {
 
 renderPlayers();
 </script>
-  <script>
-  const THIS_FILE = 'vsazka-moravec.html';
-  const STATUS_CONFIG = {
-    open:     { label: 'Otevřeno',            desc: 'Sázka přijímá tipy — zapiš svůj tip!' },
-    waiting:  { label: 'Čeká na vyhodnocení', desc: 'Tipy jsou uzavřeny. Výsledek se brzy ukáže.' },
-    resolved: { label: 'Rozhodnuto',           desc: 'Sázka je vyhodnocena. Vítěz znám.' },
-    closed:   { label: 'Uzavřeno',             desc: 'Tato sázka je archivována.' },
-  };
-    // ── Zvýraznění výherců při stavu resolved ──
-    function applyResult() {
-      const table = document.querySelector('table[data-result]');
-      if (!table) return;
-      const result = table.dataset.result; // 'ano' nebo 'ne'
-      const rows   = document.querySelectorAll('#votes-body tr');
-      let winnerNames = [];
-
-      rows.forEach(row => {
-        const badge = row.querySelector('.badge');
-        if (!badge) return;
-        const tip = badge.classList.contains('ano') ? 'ano' : 'ne';
-        if (tip === result) {
-          row.classList.add('winner');
-          const name = row.querySelector('td.name:nth-child(2)');
-          if (name) winnerNames.push(name.textContent.trim());
-        } else {
-          row.classList.add('loser');
-        }
-      });
-
-      // Show result banner below summary
-      const summary = document.getElementById('summary');
-      if (summary && winnerNames.length) {
-        const banner = document.createElement('div');
-        banner.className = 'result-banner';
-        const resultLabel = result === 'ano' ? 'ANO' : 'NE';
-        banner.innerHTML = `<span class="trophy">🏆</span> Správný tip byl <strong>${resultLabel}</strong> — vyhrál${winnerNames.length > 1 ? 'i' : ''}: <strong>${winnerNames.join(', ')}</strong>`;
-        summary.after(banner);
-      }
-    }
-
-    // Run only when status is resolved
-    fetch('index.html')
-      .then(r => r.text())
-      .then(html => {
-        const doc  = new DOMParser().parseFromString(html, 'text/html');
-        const li   = doc.querySelector('li[data-file="' + THIS_FILE + '"]');
-        if (li && li.dataset.status === 'resolved') applyResult();
-      })
-      .catch(() => {});
-  fetch('index.html')
-    .then(r => r.text())
-    .then(html => {
-      const doc    = new DOMParser().parseFromString(html, 'text/html');
-      const li     = doc.querySelector(`li[data-file="${THIS_FILE}"]`);
-      if (!li) return;
-      const status = li.dataset.status || 'closed';
-      const cfg    = STATUS_CONFIG[status] || STATUS_CONFIG.closed;
-      const el     = document.getElementById('status-banner');
-      if (!el) return;
-      el.innerHTML = `
-        <div class="status-banner status-${status}">
-          <div class="status-dot"></div>
-          <div class="status-banner-text">
-            <div class="status-banner-label">${cfg.label}</div>
-            <div class="status-banner-desc">${cfg.desc}</div>
-          </div>
-        </div>`;
-    })
-    .catch(() => {});
-  </script>
+  <script src="status.js"></script>
 </body>
 </html>
