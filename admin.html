@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin – Herberk vsázky</title>
+  <link rel="icon" href="Herberk_Salonek_logo.jpg" type="image/jpeg">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@300;400&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0d0d0d;
+      --surface: #141414;
+      --surface2: #1a1a1a;
+      --border: #222;
+      --border2: #2a2a2a;
+      --accent: #c8ff00;
+      --text: #e8e8e8;
+      --muted: #555;
+      --muted2: #888;
+      --red: #ff4444;
+      --blue: #60a5fa;
+      --gold: #f0b429;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'IBM Plex Mono', monospace;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px 80px;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(200,255,0,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(200,255,0,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 680px;
+    }
+
+    /* ── HEADER ── */
+    header { margin-bottom: 48px; }
+    .label {
+      font-size: 10px;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 12px;
+    }
+    h1 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(44px, 9vw, 80px);
+      line-height: 0.95;
+      letter-spacing: 0.02em;
+    }
+    h1 span { color: var(--accent); }
+    .divider {
+      width: 40px;
+      height: 2px;
+      background: var(--accent);
+      margin-top: 24px;
+    }
+
+    /* ── LOGIN ── */
+    #login { width: 100%; }
+    .login-desc {
+      font-size: 11px;
+      letter-spacing: 0.05em;
+      color: var(--muted2);
+      line-height: 1.7;
+      margin-bottom: 28px;
+      border-left: 2px solid var(--border2);
+      padding-left: 16px;
+    }
+    .login-desc a { color: var(--accent); }
+
+    .field { margin-bottom: 16px; }
+    .field label {
+      display: block;
+      font-size: 9px;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+    .field input {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      color: var(--text);
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 13px;
+      padding: 12px 16px;
+      letter-spacing: 0.04em;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .field input:focus { border-color: var(--accent); }
+    .field input::placeholder { color: var(--muted); }
+
+    /* ── BUTTONS ── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      padding: 10px 20px;
+      border: 1px solid currentColor;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+      background: transparent;
+    }
+    .btn-primary { color: var(--accent); border-color: rgba(200,255,0,0.4); }
+    .btn-primary:hover { background: rgba(200,255,0,0.08); }
+    .btn-secondary { color: var(--muted2); border-color: var(--border2); }
+    .btn-secondary:hover { color: var(--text); border-color: var(--muted); }
+    .btn-danger { color: var(--red); border-color: rgba(255,68,68,0.4); }
+    .btn-sm { padding: 6px 12px; font-size: 9px; }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* ── DASHBOARD ── */
+    #dashboard { width: 100%; display: none; }
+
+    .dash-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 32px;
+    }
+    .dash-status {
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      color: var(--muted2);
+    }
+    .dash-status span { color: var(--accent); }
+
+    /* ── BET CARD ── */
+    .bet-card {
+      border: 1px solid var(--border);
+      margin-bottom: 2px;
+      transition: border-color 0.2s;
+    }
+    .bet-card.open { border-left: 3px solid var(--accent); }
+    .bet-card.waiting { border-left: 3px solid var(--blue); }
+    .bet-card.resolved { border-left: 3px solid var(--gold); }
+    .bet-card.closed { border-left: 3px solid var(--muted); }
+
+    .bet-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .bet-header:hover { background: rgba(200,255,0,0.02); }
+
+    .bet-title {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .bet-num {
+      font-size: 10px;
+      color: var(--muted);
+      min-width: 20px;
+    }
+    .bet-name {
+      font-size: 13px;
+      letter-spacing: 0.04em;
+    }
+    .bet-badge {
+      font-size: 9px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 3px 10px;
+      border: 1px solid currentColor;
+    }
+    .badge-open     { color: var(--accent); border-color: rgba(200,255,0,0.35); }
+    .badge-waiting  { color: var(--blue);   border-color: rgba(96,165,250,0.35); }
+    .badge-resolved { color: var(--gold);   border-color: rgba(240,180,41,0.35); }
+    .badge-closed   { color: var(--muted);  border-color: var(--border); }
+
+    .bet-chevron {
+      color: var(--muted);
+      font-size: 12px;
+      transition: transform 0.2s;
+    }
+    .bet-card.expanded .bet-chevron { transform: rotate(180deg); }
+
+    /* ── BET BODY ── */
+    .bet-body {
+      display: none;
+      padding: 0 20px 20px;
+      border-top: 1px solid var(--border);
+    }
+    .bet-card.expanded .bet-body { display: block; }
+
+    .section {
+      margin-top: 20px;
+    }
+    .section-label {
+      font-size: 9px;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+
+    /* ── STATUS SELECTOR ── */
+    .status-grid {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .status-btn {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      padding: 6px 14px;
+      border: 1px solid var(--border2);
+      background: transparent;
+      color: var(--muted2);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .status-btn:hover { border-color: var(--muted); color: var(--text); }
+    .status-btn.active-open     { color: var(--accent); border-color: rgba(200,255,0,0.5); background: rgba(200,255,0,0.05); }
+    .status-btn.active-waiting  { color: var(--blue);   border-color: rgba(96,165,250,0.5); background: rgba(96,165,250,0.05); }
+    .status-btn.active-resolved { color: var(--gold);   border-color: rgba(240,180,41,0.5); background: rgba(240,180,41,0.05); }
+    .status-btn.active-closed   { color: var(--muted2); border-color: var(--border2); background: var(--surface); }
+
+    /* ── RESULT PICKER ── */
+    .result-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-top: 8px;
+    }
+    .result-btn {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      padding: 8px 20px;
+      border: 1px solid var(--border2);
+      background: transparent;
+      color: var(--muted2);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .result-btn.active-ano { color: var(--accent); border-color: rgba(200,255,0,0.5); background: rgba(200,255,0,0.06); }
+    .result-btn.active-ne  { color: var(--red);    border-color: rgba(255,68,68,0.5);  background: rgba(255,68,68,0.06); }
+    .result-hint {
+      font-size: 10px;
+      letter-spacing: 0.05em;
+      color: var(--muted);
+      margin-top: 6px;
+    }
+
+    /* ── PLAYERS ── */
+    .player-list {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .player-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 12px;
+      background: var(--surface);
+      font-size: 12px;
+      letter-spacing: 0.04em;
+    }
+    .player-num { color: var(--muted); font-size: 10px; min-width: 20px; }
+    .player-name { flex: 1; }
+    .player-vote {
+      font-size: 9px;
+      letter-spacing: 0.12em;
+      padding: 2px 8px;
+      border: 1px solid currentColor;
+    }
+    .player-vote.ano { color: var(--accent); }
+    .player-vote.ne  { color: var(--red); }
+
+    /* ── ADD PLAYER FORM ── */
+    .add-form {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+    .add-form input {
+      flex: 1;
+      min-width: 160px;
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      color: var(--text);
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 12px;
+      padding: 8px 12px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .add-form input:focus { border-color: var(--accent); }
+    .add-form input::placeholder { color: var(--muted); }
+    .vote-toggle {
+      display: flex;
+      gap: 0;
+    }
+    .vote-toggle button {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      padding: 8px 14px;
+      border: 1px solid var(--border2);
+      background: transparent;
+      color: var(--muted2);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .vote-toggle button:first-child { border-right: none; }
+    .vote-toggle button.active-ano { color: var(--accent); background: rgba(200,255,0,0.06); border-color: rgba(200,255,0,0.4); }
+    .vote-toggle button.active-ne  { color: var(--red);    background: rgba(255,68,68,0.06);  border-color: rgba(255,68,68,0.4); }
+
+    /* ── COMMIT ROW ── */
+    .commit-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 20px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+    }
+    .commit-msg {
+      font-size: 10px;
+      letter-spacing: 0.05em;
+      color: var(--muted2);
+    }
+
+    /* ── TOAST ── */
+    #toast {
+      position: fixed;
+      bottom: 32px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      padding: 12px 24px;
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      color: var(--text);
+      transition: transform 0.3s ease;
+      z-index: 100;
+      white-space: nowrap;
+    }
+    #toast.show { transform: translateX(-50%) translateY(0); }
+    #toast.success { border-color: rgba(200,255,0,0.4); color: var(--accent); }
+    #toast.error   { border-color: rgba(255,68,68,0.4);  color: var(--red); }
+
+    /* ── LOADER ── */
+    .loading {
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      color: var(--muted2);
+      text-transform: uppercase;
+    }
+    .loading::after {
+      content: '...';
+      animation: dots 1.2s steps(3, end) infinite;
+    }
+    @keyframes dots {
+      0%   { content: '.';   }
+      33%  { content: '..';  }
+      66%  { content: '...'; }
+    }
+
+    .moravec-note {
+      font-size: 11px;
+      letter-spacing: 0.04em;
+      color: var(--muted);
+      padding: 10px 12px;
+      background: var(--surface);
+      border-left: 2px solid var(--border2);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="label">Herberk</div>
+      <h1>Admin<br><span>rozhraní</span></h1>
+      <div class="divider"></div>
+    </header>
+
+    <!-- LOGIN -->
+    <section id="login">
+      <p class="login-desc">
+        Pro přístup zadej GitHub Personal Access Token s oprávněním <strong>repo:contents:write</strong>.<br>
+        Token se uloží pouze do sessionStorage (zmizí po zavření záložky) a nikdy se neobjeví v kódu.
+      </p>
+      <div class="field">
+        <label>GitHub Personal Access Token</label>
+        <input type="password" id="pat-input" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" autocomplete="off">
+      </div>
+      <button class="btn btn-primary" id="login-btn" onclick="login()">Přihlásit se</button>
+      <span id="login-error" style="margin-left:16px;font-size:11px;color:var(--red);display:none;"></span>
+    </section>
+
+    <!-- DASHBOARD -->
+    <section id="dashboard">
+      <div class="dash-header">
+        <span class="dash-status">Přihlášen jako <span id="gh-user">—</span></span>
+        <button class="btn btn-secondary btn-sm" onclick="logout()">Odhlásit</button>
+      </div>
+      <div id="bets-container"><span class="loading">Načítám sázky</span></div>
+    </section>
+  </div>
+
+  <div id="toast"></div>
+
+  <script>
+  // ── CONFIG ────────────────────────────────────────────────────────────────
+  const REPO     = 'quajakus/Herberk-vsazky';
+  const API      = `https://api.github.com/repos/${REPO}/contents`;
+
+  // ── STATE ────────────────────────────────────────────────────────────────
+  let pat = sessionStorage.getItem('hb_pat') || '';
+  // pendingChanges[betFile] = { status, result, playersToAdd[] }
+  const pending = {};
+
+  // ── BASE64 ───────────────────────────────────────────────────────────────
+  function b64dec(s) {
+    const bin = atob(s.replace(/\n/g, ''));
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return new TextDecoder().decode(bytes);
+  }
+  function b64enc(s) {
+    const bytes = new TextEncoder().encode(s);
+    let bin = '';
+    bytes.forEach(b => bin += String.fromCharCode(b));
+    return btoa(bin);
+  }
+
+  // ── GITHUB API ───────────────────────────────────────────────────────────
+  async function ghGet(file) {
+    const r = await fetch(`${API}/${file}`, {
+      headers: { Authorization: `Bearer ${pat}`, Accept: 'application/vnd.github+json' }
+    });
+    if (!r.ok) throw new Error(`HTTP ${r.status}: ${(await r.json()).message}`);
+    const d = await r.json();
+    return { html: b64dec(d.content), sha: d.sha };
+  }
+
+  async function ghPut(file, html, sha, message) {
+    const r = await fetch(`${API}/${file}`, {
+      method: 'PUT',
+      headers: {
+        Authorization: `Bearer ${pat}`,
+        Accept: 'application/vnd.github+json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ message, content: b64enc(html), sha }),
+    });
+    if (!r.ok) throw new Error(`HTTP ${r.status}: ${(await r.json()).message}`);
+    return r.json();
+  }
+
+  // ── HTML MUTATIONS ───────────────────────────────────────────────────────
+  function escRe(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+
+  function mutateStatus(indexHtml, file, status) {
+    return indexHtml.replace(
+      new RegExp(`(<li[^>]*data-file="${escRe(file)}"[^>]*)data-status="[^"]*"`),
+      `$1data-status="${status}"`
+    );
+  }
+
+  function mutateResult(vsazkaHtml, result) {
+    return vsazkaHtml.replace(/(<table[^>]*)data-result="[^"]*"/, `$1data-result="${result}"`);
+  }
+
+  function mutateAddPlayer(vsazkaHtml, name, vote) {
+    const tbodyMatch = vsazkaHtml.match(/<tbody id="votes-body">([\s\S]*?)<\/tbody>/);
+    const n = tbodyMatch ? (tbodyMatch[1].match(/<tr>/g) || []).length + 1 : 1;
+    const num = String(n).padStart(2, '0');
+    const row =
+      `\n          <tr>\n` +
+      `            <td class="name" style="color:var(--muted);font-size:10px;">${num}</td>\n` +
+      `            <td class="name">${esc(name)}</td>\n` +
+      `            <td class="vote"><span class="badge ${vote}">${vote.toUpperCase()}</span></td>\n` +
+      `          </tr>`;
+    const marker = '<!-- Přidej další řádky sem -->';
+    if (vsazkaHtml.includes(marker)) {
+      return vsazkaHtml.replace(marker, row + '\n          ' + marker);
+    }
+    return vsazkaHtml.replace('</tbody>', row + '\n        </tbody>');
+  }
+
+  function esc(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // ── PARSE ────────────────────────────────────────────────────────────────
+  function parseBets(html) {
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    return [...doc.querySelectorAll('li[data-file]')].map(li => ({
+      file:     li.dataset.file,
+      name:     li.querySelector('.filename')?.textContent.trim() || li.dataset.file,
+      status:   li.dataset.status || 'closed',
+      deadline: li.dataset.deadline || '',
+      num:      li.querySelector('.index-num')?.textContent.trim() || '—',
+    }));
+  }
+
+  function parsePlayers(html) {
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    return [...doc.querySelectorAll('#votes-body tr')].map(tr => {
+      const cells = [...tr.querySelectorAll('td')];
+      const badge = tr.querySelector('.badge');
+      return {
+        num:  cells[0]?.textContent.trim(),
+        name: cells[1]?.textContent.trim(),
+        vote: badge?.classList.contains('ano') ? 'ano' : 'ne',
+      };
+    }).filter(p => p.name);
+  }
+
+  function parseResult(html) {
+    const m = html.match(/data-result="([^"]*)"/);
+    return m ? m[1] : '';
+  }
+
+  function hasVotesBody(html) { return html.includes('id="votes-body"'); }
+
+  // ── AUTH ─────────────────────────────────────────────────────────────────
+  async function login() {
+    const input = document.getElementById('pat-input');
+    const errEl = document.getElementById('login-error');
+    const btn   = document.getElementById('login-btn');
+    pat = input.value.trim();
+    if (!pat) return;
+
+    btn.disabled = true;
+    btn.textContent = 'Ověřuji...';
+    errEl.style.display = 'none';
+
+    try {
+      const r = await fetch('https://api.github.com/user', {
+        headers: { Authorization: `Bearer ${pat}` }
+      });
+      if (!r.ok) throw new Error('Neplatný token');
+      const user = await r.json();
+
+      sessionStorage.setItem('hb_pat', pat);
+      document.getElementById('gh-user').textContent = user.login;
+      document.getElementById('login').style.display = 'none';
+      document.getElementById('dashboard').style.display = 'block';
+      loadDashboard();
+    } catch (e) {
+      errEl.textContent = e.message;
+      errEl.style.display = 'inline';
+      btn.disabled = false;
+      btn.textContent = 'Přihlásit se';
+    }
+  }
+
+  function logout() {
+    sessionStorage.removeItem('hb_pat');
+    pat = '';
+    document.getElementById('login').style.display = 'block';
+    document.getElementById('dashboard').style.display = 'none';
+    document.getElementById('pat-input').value = '';
+    document.getElementById('login-btn').disabled = false;
+    document.getElementById('login-btn').textContent = 'Přihlásit se';
+  }
+
+  // ── DASHBOARD ────────────────────────────────────────────────────────────
+  async function loadDashboard() {
+    const container = document.getElementById('bets-container');
+    container.innerHTML = '<span class="loading">Načítám sázky</span>';
+    try {
+      const { html } = await ghGet('index.html');
+      const bets = parseBets(html);
+      container.innerHTML = '';
+      for (const bet of bets) {
+        pending[bet.file] = { status: bet.status, result: null, playersToAdd: [] };
+        container.appendChild(renderBetCard(bet));
+      }
+    } catch (e) {
+      container.innerHTML = `<span style="color:var(--red);font-size:11px;">${e.message}</span>`;
+    }
+  }
+
+  // ── RENDER BET CARD ──────────────────────────────────────────────────────
+  function renderBetCard(bet) {
+    const card = document.createElement('div');
+    card.className = `bet-card ${bet.status}`;
+    card.dataset.file = bet.file;
+
+    card.innerHTML = `
+      <div class="bet-header" onclick="toggleCard(this)">
+        <div class="bet-title">
+          <span class="bet-num">${bet.num}</span>
+          <span class="bet-name">${bet.name}</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <span class="bet-badge badge-${bet.status}">${statusLabel(bet.status)}</span>
+          <span class="bet-chevron">▼</span>
+        </div>
+      </div>
+      <div class="bet-body" id="body-${bet.file}">
+        <div class="loading" style="margin-top:16px;">Načítám detail</div>
+      </div>`;
+
+    return card;
+  }
+
+  async function toggleCard(header) {
+    const card = header.closest('.bet-card');
+    const isExpanded = card.classList.contains('expanded');
+    card.classList.toggle('expanded', !isExpanded);
+    if (!isExpanded && card.dataset.loaded !== 'true') {
+      card.dataset.loaded = 'true';
+      await loadBetDetail(card.dataset.file);
+    }
+  }
+
+  async function loadBetDetail(file) {
+    const body = document.getElementById(`body-${file}`);
+    try {
+      const { html } = await ghGet(file);
+      const isMoravec = !hasVotesBody(html);
+      const players   = isMoravec ? [] : parsePlayers(html);
+      const result    = isMoravec ? '' : parseResult(html);
+      pending[file].result = result;
+
+      body.innerHTML = `
+        ${renderStatusSection(file, pending[file].status)}
+        ${renderResultSection(file, pending[file].status, result, isMoravec)}
+        ${renderPlayersSection(file, players, isMoravec)}
+        <div class="commit-row">
+          <button class="btn btn-primary btn-sm" onclick="saveChanges('${file}')">Uložit změny</button>
+          <span class="commit-msg" id="commit-info-${file}"></span>
+        </div>`;
+    } catch (e) {
+      body.innerHTML = `<p style="color:var(--red);font-size:11px;margin-top:16px;">${e.message}</p>`;
+    }
+  }
+
+  // ── RENDER SECTIONS ──────────────────────────────────────────────────────
+  function renderStatusSection(file, current) {
+    const statuses = ['open', 'waiting', 'resolved', 'closed'];
+    const labels   = { open: 'Otevřeno', waiting: 'Čeká', resolved: 'Rozhodnuto', closed: 'Uzavřeno' };
+    const btns = statuses.map(s => `
+      <button class="status-btn ${s === current ? `active-${s}` : ''}"
+        onclick="setStatus('${file}', '${s}', this)">${labels[s]}</button>
+    `).join('');
+    return `
+      <div class="section">
+        <div class="section-label">Stav sázky</div>
+        <div class="status-grid">${btns}</div>
+      </div>`;
+  }
+
+  function renderResultSection(file, status, currentResult, isMoravec) {
+    if (isMoravec) return '';
+    const showClass = status === 'resolved' ? '' : 'style="display:none"';
+    return `
+      <div class="section" id="result-section-${file}" ${showClass}>
+        <div class="section-label">Správný výsledek</div>
+        <div class="result-row">
+          <button class="result-btn ${currentResult === 'ano' ? 'active-ano' : ''}"
+            onclick="setResult('${file}', 'ano', this)">ANO</button>
+          <button class="result-btn ${currentResult === 'ne' ? 'active-ne' : ''}"
+            onclick="setResult('${file}', 'ne', this)">NE</button>
+        </div>
+        <div class="result-hint">Výsledek se zapíše do souboru sázky při uložení.</div>
+      </div>`;
+  }
+
+  function renderPlayersSection(file, players, isMoravec) {
+    if (isMoravec) {
+      return `
+        <div class="section">
+          <div class="section-label">Hráči</div>
+          <div class="moravec-note">Hráče a tipy spravuj přímo na stránce sázky (čísla + localStorage).</div>
+        </div>`;
+    }
+
+    const rows = players.length
+      ? players.map(p => `
+          <div class="player-row">
+            <span class="player-num">${p.num}</span>
+            <span class="player-name">${p.name}</span>
+            <span class="player-vote ${p.vote}">${p.vote.toUpperCase()}</span>
+          </div>`).join('')
+      : '<div class="player-row" style="color:var(--muted);">Žádní hráči</div>';
+
+    return `
+      <div class="section">
+        <div class="section-label">Hráči (${players.length})</div>
+        <div class="player-list" id="players-${file}">${rows}</div>
+        <div class="add-form" id="add-form-${file}">
+          <input type="text" placeholder="Jméno hráče" id="new-name-${file}" autocomplete="off">
+          <div class="vote-toggle" id="vote-toggle-${file}">
+            <button class="active-ano" onclick="toggleVote('${file}', 'ano', this)">ANO</button>
+            <button onclick="toggleVote('${file}', 'ne', this)">NE</button>
+          </div>
+          <button class="btn btn-secondary btn-sm" onclick="queuePlayer('${file}')">+ Přidat</button>
+        </div>
+      </div>`;
+  }
+
+  // ── INTERACTIONS ─────────────────────────────────────────────────────────
+  function setStatus(file, status, btn) {
+    pending[file].status = status;
+    const grid = btn.closest('.status-grid');
+    grid.querySelectorAll('.status-btn').forEach(b => {
+      b.className = 'status-btn';
+    });
+    btn.classList.add(`active-${status}`);
+
+    const resultSection = document.getElementById(`result-section-${file}`);
+    if (resultSection) {
+      resultSection.style.display = status === 'resolved' ? '' : 'none';
+    }
+
+    const card = btn.closest('.bet-card');
+    card.className = `bet-card ${status} expanded`;
+    card.querySelector('.bet-badge').className = `bet-badge badge-${status}`;
+    card.querySelector('.bet-badge').textContent = statusLabel(status);
+  }
+
+  function setResult(file, result, btn) {
+    pending[file].result = result;
+    const row = btn.closest('.result-row');
+    row.querySelectorAll('.result-btn').forEach(b => b.className = 'result-btn');
+    btn.classList.add(`active-${result}`);
+  }
+
+  function toggleVote(file, vote, btn) {
+    const toggle = document.getElementById(`vote-toggle-${file}`);
+    toggle.querySelectorAll('button').forEach(b => b.className = '');
+    btn.classList.add(`active-${vote}`);
+    toggle.dataset.vote = vote;
+  }
+
+  function queuePlayer(file) {
+    const nameInput = document.getElementById(`new-name-${file}`);
+    const toggle    = document.getElementById(`vote-toggle-${file}`);
+    const name = nameInput.value.trim();
+    if (!name) { nameInput.focus(); return; }
+    const vote = toggle.dataset.vote || 'ano';
+
+    pending[file].playersToAdd.push({ name, vote });
+
+    // Optimistic UI
+    const list = document.getElementById(`players-${file}`);
+    const placeholder = list.querySelector('[style*="Žádní"]');
+    if (placeholder) placeholder.remove();
+    const n = list.querySelectorAll('.player-row').length + 1;
+    const div = document.createElement('div');
+    div.className = 'player-row';
+    div.style.opacity = '0.5';
+    div.innerHTML = `<span class="player-num">${String(n).padStart(2,'0')}</span><span class="player-name">${esc(name)} <span style="font-size:9px;color:var(--muted);">(neuloženo)</span></span><span class="player-vote ${vote}">${vote.toUpperCase()}</span>`;
+    list.appendChild(div);
+    nameInput.value = '';
+    nameInput.focus();
+
+    updateCommitInfo(file);
+  }
+
+  function updateCommitInfo(file) {
+    const el = document.getElementById(`commit-info-${file}`);
+    if (!el) return;
+    const p = pending[file];
+    const parts = [];
+    parts.push(`stav: ${p.status}`);
+    if (p.result) parts.push(`výsledek: ${p.result.toUpperCase()}`);
+    if (p.playersToAdd.length) parts.push(`+${p.playersToAdd.length} hráč${p.playersToAdd.length > 1 ? 'i' : ''}`);
+    el.textContent = parts.join(' · ');
+  }
+
+  // ── SAVE ─────────────────────────────────────────────────────────────────
+  async function saveChanges(file) {
+    const btn = document.querySelector(`#body-${file} .commit-row .btn-primary`);
+    btn.disabled = true;
+    btn.textContent = 'Ukládám...';
+
+    const p = pending[file];
+
+    try {
+      // 1. Update index.html (status)
+      const { html: indexHtml, sha: indexSha } = await ghGet('index.html');
+      const newIndexHtml = mutateStatus(indexHtml, file, p.status);
+      if (newIndexHtml !== indexHtml) {
+        await ghPut('index.html', newIndexHtml, indexSha, `admin: ${file} → ${p.status}`);
+      }
+
+      // 2. Update vsazka file (result + players)
+      const { html: vsazkaHtml, sha: vsazkaSha } = await ghGet(file);
+      if (!hasVotesBody(vsazkaHtml)) {
+        // moravec — nothing to write
+        toast('Stav uložen ✓', 'success');
+        btn.textContent = 'Uloženo ✓';
+        return;
+      }
+
+      let newVsazkaHtml = vsazkaHtml;
+      const messages = [];
+
+      if (p.result && p.status === 'resolved') {
+        newVsazkaHtml = mutateResult(newVsazkaHtml, p.result);
+        messages.push(`výsledek=${p.result}`);
+      }
+      for (const player of p.playersToAdd) {
+        newVsazkaHtml = mutateAddPlayer(newVsazkaHtml, player.name, player.vote);
+        messages.push(`+${player.name}`);
+      }
+
+      if (newVsazkaHtml !== vsazkaHtml) {
+        await ghPut(file, newVsazkaHtml, vsazkaSha,
+          `admin: ${file} — ${messages.join(', ')}`);
+      }
+
+      // clear queued players
+      pending[file].playersToAdd = [];
+      // refresh detail
+      card(file).dataset.loaded = 'false';
+      await loadBetDetail(file);
+
+      toast('Uloženo — GitHub Pages se zaktualizuje za ~30s ✓', 'success');
+    } catch (e) {
+      toast(e.message, 'error');
+      btn.disabled = false;
+      btn.textContent = 'Uložit změny';
+    }
+  }
+
+  // ── HELPERS ──────────────────────────────────────────────────────────────
+  function card(file) {
+    return document.querySelector(`.bet-card[data-file="${file}"]`);
+  }
+
+  function statusLabel(s) {
+    return { open: 'Otevřeno', waiting: 'Čeká', resolved: 'Rozhodnuto', closed: 'Uzavřeno' }[s] || s;
+  }
+
+  let toastTimer;
+  function toast(msg, type = '') {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.className = `show ${type}`;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.className = '', 4000);
+  }
+
+  // ── INIT ─────────────────────────────────────────────────────────────────
+  (function init() {
+    if (pat) {
+      // Restore session
+      fetch('https://api.github.com/user', {
+        headers: { Authorization: `Bearer ${pat}` }
+      }).then(r => r.json()).then(user => {
+        document.getElementById('gh-user').textContent = user.login || '—';
+        document.getElementById('login').style.display = 'none';
+        document.getElementById('dashboard').style.display = 'block';
+        loadDashboard();
+      }).catch(() => { sessionStorage.removeItem('hb_pat'); pat = ''; });
+    }
+    document.getElementById('pat-input').addEventListener('keydown', e => {
+      if (e.key === 'Enter') login();
+    });
+  })();
+  </script>
+</body>
+</html>
