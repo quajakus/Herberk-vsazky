@@ -50,12 +50,23 @@
 
       const el = document.getElementById('status-banner');
       if (el) {
+        let countdownHtml = '';
+        const deadline = li.dataset.deadline;
+        if (deadline && status !== 'resolved' && status !== 'closed') {
+          const daysLeft = Math.ceil((new Date(deadline) - new Date()) / 86400000);
+          if (daysLeft > 0) {
+            countdownHtml = `<div style="margin-top:6px;font-size:10px;letter-spacing:0.12em;color:var(--muted2);">⏱ ${daysLeft} dní do termínu</div>`;
+          } else {
+            countdownHtml = `<div style="margin-top:6px;font-size:10px;letter-spacing:0.12em;color:var(--muted2);">⏱ Termín vypršel</div>`;
+          }
+        }
         el.innerHTML = `
           <div class="status-banner status-${status}">
             <div class="status-dot"></div>
             <div class="status-banner-text">
               <div class="status-banner-label">${cfg.label}</div>
               <div class="status-banner-desc">${cfg.desc}</div>
+              ${countdownHtml}
             </div>
           </div>`;
       }
