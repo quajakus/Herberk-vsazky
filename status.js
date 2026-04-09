@@ -1,6 +1,6 @@
 (function () {
   const STATUS_CONFIG = {
-    open:     { label: 'Otevřeno',            desc: 'Sázka přijímá tipy — zapiš svůj tip!' },
+    open:     { label: 'Otevřeno',            desc: 'Sázka přijímá tipy — Tipuj na Discordu!' },
     waiting:  { label: 'Čeká na vyhodnocení', desc: 'Tipy jsou uzavřeny. Výsledek se brzy ukáže.' },
     resolved: { label: 'Rozhodnuto',           desc: 'Sázka je vyhodnocena. Vítěz znám.' },
     closed:   { label: 'Vyrovnáno',             desc: 'Tato sázka je vyrovnána.' },
