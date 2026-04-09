@@ -3,7 +3,7 @@
     open:     { label: 'Otevřeno',            desc: 'Sázka přijímá tipy — zapiš svůj tip!' },
     waiting:  { label: 'Čeká na vyhodnocení', desc: 'Tipy jsou uzavřeny. Výsledek se brzy ukáže.' },
     resolved: { label: 'Rozhodnuto',           desc: 'Sázka je vyhodnocena. Vítěz znám.' },
-    closed:   { label: 'Uzavřeno',             desc: 'Tato sázka je archivována.' },
+    closed:   { label: 'Vyrovnáno',             desc: 'Tato sázka je vyrovnána.' },
   };
 
   function applyResult() {
@@ -71,7 +71,7 @@
           </div>`;
       }
 
-      if (status === 'resolved') {
+      if (status === 'resolved' || status === 'closed') {
         applyResult();
       }
     })

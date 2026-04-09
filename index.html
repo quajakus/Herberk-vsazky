@@ -160,6 +160,12 @@
       align-items: center;
     }
 
+    .filename-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
     .vsazky-list a .right {
       display: flex;
       align-items: center;
@@ -179,6 +185,17 @@
     .status-waiting  { color: #60a5fa; border-color: rgba(96,165,250,0.35); background: rgba(96,165,250,0.05); }
     .status-resolved { color: #f0b429; border-color: rgba(240,180,41,0.35); background: rgba(240,180,41,0.05); }
     .status-closed   { color: var(--muted); border-color: var(--border); }
+
+    .deadline {
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .deadline-soon {
+      color: #f87171;
+    }
 
     .stats {
       margin: 24px 0 32px;
@@ -263,7 +280,7 @@
     <div class="stats" id="stats-bar"></div>
 
     <ul class="vsazky-list">
-      <li data-status="resolved" data-file="vsazka-discord.html">
+      <li data-status="closed" data-file="vsazka-discord.html">
         <a href="vsazka-discord.html">
           <span class="left">
             <span class="index-num">01</span>
@@ -285,11 +302,13 @@
           </span>
         </a>
       </li>
-      <li data-status="open" data-file="vsazka-sidlo.html">
+      <li data-status="open" data-deadline="2026-10-17" data-file="vsazka-sidlo.html">
         <a href="vsazka-sidlo.html">
           <span class="left">
             <span class="index-num">03</span>
-            <span class="filename">Senátor Jindra</span>
+            <span class="filename-wrap">
+              <span class="filename">Senátor Jindra</span>
+            </span>
           </span>
           <span class="right">
             <span class="arrow">→</span>
@@ -300,7 +319,9 @@
         <a href="vsazka-duben.html">
           <span class="left">
             <span class="index-num">04</span>
-            <span class="filename">Přídělový systém na paliva</span>
+            <span class="filename-wrap">
+              <span class="filename">Přídělový systém na paliva</span>
+            </span>
           </span>
           <span class="right">
             <span class="arrow">→</span>
@@ -348,7 +369,7 @@
       { key: 'open',     label: 'otevřené',   color: '#c8ff00' },
       { key: 'waiting',  label: 'čeká',        color: '#60a5fa' },
       { key: 'resolved', label: 'rozhodnuté',  color: '#f0b429' },
-      { key: 'closed',   label: 'uzavřené',    color: '#555'    },
+      { key: 'closed',   label: 'vyrovnáno',   color: '#f0b429' },
     ];
     const total = Object.values(counts).reduce((a, b) => a + b, 0);
     const bar = document.getElementById('stats-bar');
@@ -366,7 +387,7 @@
     open:     { label: 'Sběr tipů',            cls: 'status-open' },
     waiting:  { label: 'Čeká na vyhodnocení',  cls: 'status-waiting' },
     resolved: { label: 'Rozhodnuto',            cls: 'status-resolved' },
-    closed:   { label: 'Uzavřeno',              cls: 'status-closed' },
+    closed:   { label: 'Vyrovnáno',              cls: 'status-resolved' },
   };
 
   document.querySelectorAll('.vsazky-list li[data-status]').forEach(li => {
@@ -375,10 +396,37 @@
     if (!cfg) return;
     const right = li.querySelector('.right');
     if (!right) return;
+
     const badge = document.createElement('span');
     badge.className = `status ${cfg.cls}`;
     badge.textContent = cfg.label;
     right.insertBefore(badge, right.firstChild);
+
+    if (li.dataset.deadline) {
+      const deadline = new Date(li.dataset.deadline + 'T23:59:59');
+      const wrap = li.querySelector('.filename-wrap');
+      if (!wrap) return;
+      const span = document.createElement('span');
+      span.className = 'deadline';
+      wrap.appendChild(span);
+
+      function updateCountdown() {
+        const diff = deadline - Date.now();
+        if (diff <= 0) {
+          span.textContent = 'vypršelo';
+          span.classList.add('deadline-soon');
+          return;
+        }
+        const days    = Math.floor(diff / 86400000);
+        const hours   = Math.floor((diff % 86400000) / 3600000);
+        const minutes = Math.floor((diff % 3600000) / 60000);
+        const seconds = Math.floor((diff % 60000) / 1000);
+        span.textContent = `za ${days}d ${hours}h ${minutes}m ${seconds}s`;
+        span.className = 'deadline' + (days < 14 ? ' deadline-soon' : '');
+      }
+      updateCountdown();
+      setInterval(updateCountdown, 1000);
+    }
   });
   </script>
 </body>
