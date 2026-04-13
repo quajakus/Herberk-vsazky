@@ -415,7 +415,7 @@
     badge.textContent = cfg.label;
     right.insertBefore(badge, right.firstChild);
 
-    if (li.dataset.deadline) {
+    if (li.dataset.deadline && status !== 'resolved' && status !== 'closed') {
       const deadline = new Date(li.dataset.deadline + 'T23:59:59');
       const wrap = li.querySelector('.filename-wrap');
       if (!wrap) return;
